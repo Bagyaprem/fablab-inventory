@@ -1,0 +1,114 @@
+/* ─── HeroSection ────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: calc(100vh - var(--nav-h));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 60px 24px 80px;
+}
+
+/* Animated background orbs */
+.hero__orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.2;
+  animation: orbFloat 9s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 650px; height: 650px;
+  background: radial-gradient(circle, #6366f1, transparent);
+  top: -200px; right: -80px;
+}
+
+.orb-2 {
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, #3b82f6, transparent);
+  bottom: -80px; left: -60px;
+  animation-delay: -4s;
+}
+
+.orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, #8b5cf6, transparent);
+  top: 40%; left: 42%;
+  animation-delay: -7s;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(18px, -26px) scale(1.04); }
+}
+
+/* Content */
+.hero__content {
+  max-width: 740px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  color: var(--accent-light);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 16px;
+  border-radius: 100px;
+  margin-bottom: 28px;
+  letter-spacing: 0.3px;
+}
+
+.badge-pulse {
+  width: 6px; height: 6px;
+  background: #6ee7b7;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.5); }
+}
+
+.hero__title {
+  font-size: clamp(38px, 6vw, 72px);
+  font-weight: 900;
+  letter-spacing: -2.5px;
+  line-height: 1.08;
+  margin-bottom: 22px;
+}
+
+.hero__sub {
+  font-size: 17px;
+  color: var(--text-2);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto 40px;
+}
+
+.hero__actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .hero__actions { flex-direction: column; align-items: center; }
+  .hero__title   { letter-spacing: -1.5px; }
+}
