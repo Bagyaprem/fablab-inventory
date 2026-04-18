@@ -1,6 +1,7 @@
 // src/api/inventoryApi.js
 const GAS_URL = "https://script.google.com/macros/s/AKfycbweodnN2W5nIa2h8iAM6EhAgTUF4oljGfl3brYRo6ctQUKqGxfqe71hXzSdifkD2xzEhA/exec";
 
+
 /**
  * Sends a "Take" request to Google Sheets
  */

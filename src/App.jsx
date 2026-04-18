@@ -55,7 +55,7 @@ function App() {
             <Routes>
               <Route path="/"       element={<HomePage />}   />
               <Route path="/borrow" element={<BorrowPage />} />
-              <Route path="/return" element={<ReturnPage />} />
+              <Route path="/take" element={<ReturnPage />} />
               <Route path="*"       element={<NotFound />}   />
             </Routes>
           </Suspense>
