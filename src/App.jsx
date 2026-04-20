@@ -54,7 +54,7 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/"       element={<HomePage />}   />
-              <Route path="/take" element={<BorrowPage />} />
+              <Route path="/borrow" element={<BorrowPage />} />
               <Route path="/return" element={<ReturnPage />} />
               <Route path="*"       element={<NotFound />}   />
             </Routes>
