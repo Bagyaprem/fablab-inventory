@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const NAV_LINKS = [
-  { path: '/', label: 'Home', icon: '🏠' },
-  { path: '/take', label: 'Take Components', icon: '📤' },
-  { path: '/return', label: 'Return Components', icon: '📥' },
+  { path: '/', label: 'Home',},
+  { path: '/take', label: 'Take Components',},
+  { path: '/return', label: 'Return Components',  },
 ];
 
 const Header = () => {
@@ -17,8 +17,8 @@ const Header = () => {
       <div className="container navbar__inner">
         {/* Brand */}
         <div className="navbar__brand" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <span className="navbar__logo-icon">📦</span>
-          <span className="navbar__logo-text">InvenTrack</span>
+          <span className="navbar__logo-icon"></span>
+          <span className="navbar__logo-text">fab lab inventory</span>
         </div>
 
         {/* Desktop Nav */}

@@ -9,7 +9,7 @@ const Footer = () => {
     <footer className="footer">
       <div className="container footer__inner">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>📦</span>
+          <span style={{ fontSize: '18px' }}></span>
           <span className="footer__copy">
             © {year} InvenTrack — Intelligent Inventory Management
           </span>

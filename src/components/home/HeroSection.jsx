@@ -40,13 +40,13 @@ const HeroSection = () => {
             className="btn btn--primary btn--lg"
             onClick={() => navigate('/take')} // Changed to /take to match your routes
           >
-            📤 Take Components
+            Take Components
           </button>
           <button
             className="btn btn--outline btn--lg"
             onClick={() => navigate('/return')}
           >
-            📥 Return Items
+             Return Items
           </button>
         </div>
       </div>

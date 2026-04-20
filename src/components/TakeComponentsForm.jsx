@@ -240,7 +240,7 @@ const TakeComponentsForm = () => {
           Clear
         </button>
         <button type="submit" className="btn btn--primary" disabled={loading}>
-          {loading ? <><Spinner />&nbsp;Submitting…</> : '📤 Submit Request'}
+          {loading ? <><Spinner />&nbsp;Submitting…</> : ' Submit Request'}
         </button>
       </div>
     </form>

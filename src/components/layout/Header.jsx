@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 
 const NAV_LINKS = [
-  { path: '/',       label: 'Home',              icon: '🏠' },
-  { path: '/borrow', label: 'Take Components',   icon: '📤' },
-  { path: '/return', label: 'Return Components', icon: '📥' },
+  { path: '/',       label: 'Home',         },
+  { path: '/borrow', label: 'Take Components',  },
+  { path: '/return', label: 'Return Components',  },
 ];
 
 const Header = () => {

@@ -127,7 +127,7 @@ const ReminderEmail = () => (
       </p>
     </div>
 
-    <h3 className="email-section-title">🔧 Items to Return</h3>
+    <h3 className="email-section-title"> Items to Return</h3>
     <CompList items={SAMPLE.components} />
 
     <div className="email-cta-wrap">
@@ -161,7 +161,7 @@ const EscalationEmail = () => (
       </p>
     </div>
 
-    <h3 className="email-section-title">👤 Borrower Details</h3>
+    <h3 className="email-section-title"> Borrower Details</h3>
     <DetailTable rows={[
       ['Name',         SAMPLE.name],
       ['Email',        SAMPLE.email],
