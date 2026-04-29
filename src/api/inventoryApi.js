@@ -2,7 +2,7 @@
 // ─── Central API layer for FabLab Inventory ────────────────────────
 
 export const BASE_URL =
-  'https://script.google.com/macros/s/AKfycbyyLfvcQZ4Ml-lexk4HXPFbRDqAQzcbDAKrhQGl4P29a4TwQ_PmH54xYQLP63AMcvlt7g/exec';
+  'https://script.google.com/macros/s/AKfycbzm3d7TMjcKUOQJo0Pf8jHdfVpwlKj4X5T75wVGqheaUOxHciCISnzgdl66Jwi-m8BzVw/exec';
 
 // ── Generic POST helper ──────────────────────────────────────────────
 async function post(payload) {
