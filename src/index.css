@@ -200,3 +200,25 @@ img, svg { display: block; }
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-in { animation: fadeIn 0.3s ease; }
+
+/* ─── Contact Page Styles ────────────────────────────────────────────── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+  align-items: stretch;
+}
+@media (max-width: 800px) {
+  .contact-grid { grid-template-columns: 1fr; }
+}
+.contact-card, .contact-form-panel {
+  padding: 30px;
+  border-radius: 20px;
+}
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #c9d1d9;
+  font-size: 14px;
+}

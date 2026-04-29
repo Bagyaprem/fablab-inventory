@@ -1,177 +1,135 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, RotateCcw, CheckCircle, Package, Calendar, User, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { lookupRequests, returnComponents } from '../../api/inventoryApi';
-import StatusBadge, { Spinner } from '../common/StatusBadge';
 import './ReturnForm.css';
 
-// --- FIXED: Handles "Invalid Date" errors safely ---
-const fmtDate = (d) => {
-  if (!d) return '—';
-  const dateObj = new Date(d);
-  
-  // If conversion fails, show the raw text from the sheet
-  if (isNaN(dateObj.getTime())) return d; 
+const ReturnForm = () => {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  return dateObj.toLocaleDateString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  });
-};
-
-const isOverdue = (r) =>
-  r.status !== 'Returned' && new Date(r.return_date + 'T00:00:00') < new Date();
-
-const ReturnForm = ({ prefillId = '' }) => {
-  const [query,     setQuery]     = useState(prefillId);
-  const [searchErr, setSearchErr] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [results,   setResults]   = useState(null); 
-  const [returning, setReturning] = useState({});
-
-  useEffect(() => {
-    if (prefillId && prefillId.length >= 3) handleSearch(prefillId);
-  }, [prefillId]);
-
-  const handleSearch = async (override) => {
-    const q = (override ?? query).trim();
-    setSearchErr('');
-    if (q.length < 2) { setSearchErr('Enter at least 2 characters.'); return; }
-
-    setSearching(true);
-    setResults(null);
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    if (query.trim().length < 3) return toast.error("Enter at least 3 characters");
+    
+    setLoading(true);
     try {
-      // Calls the dynamic API we updated (Name, Email, or ID)
-      const res = await lookupRequests(q);
-      setResults(res.data.data);
-    } catch (err) {
-      setSearchErr(err.message || 'Search failed. Try again.');
-    } finally {
-      setSearching(false);
+      const res = await lookupRequests(query);
+      // Fallback safely just in case the Google Script structure changes slightly
+      const data = res.data?.data?.data || res.data?.data || [];
+      setResults(data); 
+      
+      if (data.length === 0) toast("No active requests found.", { icon: '📦' });
+    } catch { 
+      toast.error("Search failed. Please check your connection."); 
+    } finally { 
+      setLoading(false); 
     }
   };
 
-  const handleReturn = async (id) => {
-    if (!window.confirm('Mark all items in this request as returned?')) return;
-    setReturning((p) => ({ ...p, [id]: true }));
+  const processReturn = async (id) => {
+    if (!window.confirm("Confirm return of all items?")) return;
+    const tId = toast.loading("Updating Inventory...");
     try {
       await returnComponents(id);
-      toast.success('Items marked as returned!');
-      setResults((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status: 'Returned' } : r))
-      );
-    } catch (err) {
-      toast.error(err.message || 'Failed to update. Try again.');
-    } finally {
-      setReturning((p) => ({ ...p, [id]: false }));
+      setResults(prev => prev.map(r => r.id === id ? { ...r, status: 'Returned' } : r));
+      toast.success("Items Successfully Restocked!", { id: tId });
+    } catch { 
+      toast.error("Update failed", { id: tId }); 
     }
-  };
-
-  const clearSearch = () => {
-    setQuery('');
-    setResults(null);
-    setSearchErr('');
   };
 
   return (
-    <div>
-      <div className="return-search-card">
-        {/* Updated Title to include "Name" */}
-        <div className="return-search-card__title">Search by Name, Email or ID</div>
-        <div className="return-search-card__desc">
-          Enter the borrower's name, email, or the unique request ID.
-        </div>
-
-        <div className="search-bar">
-          <svg className="search-bar__icon" width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-
-          <input
-            className="search-bar__input"
-            id="return-search-input"
-            type="text"
-            placeholder="Search name, email or ID…"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setSearchErr(''); }}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            autoComplete="off"
-          />
-
-          <button
-            className="btn btn--primary btn--sm"
-            style={{ borderRadius: '8px', padding: '8px 20px' }}
-            onClick={() => handleSearch()}
-            disabled={searching}
-          >
-            {searching ? <Spinner size={14} /> : '🔍 Search'}
-          </button>
-        </div>
-        <span className="search-error">{searchErr}</span>
+    <div className="form-container">
+      
+      <div className="borrow-header-area">
+        <div className="header-icon return-icon"><RotateCcw size={28} /></div>
+        <h1 className="form-title">Return <span className="text-accent">Components</span></h1>
+        <p className="form-subtitle">Locate and clear your borrowed items securely.</p>
       </div>
 
-      {results !== null && (
-        <div className="results-wrap">
-          <div className="results-header">
-            <span>
-              {results.length === 0
-                ? 'No active requests found.'
-                : `Found ${results.length} record(s)`}
-            </span>
-            <button className="btn btn--ghost btn--sm" onClick={clearSearch}>
-              ← New Search
+      <div className="form-card">
+        <div className="card-accent return-accent"></div>
+        
+        {/* Search Section */}
+        <div className="search-section">
+          <label className="section-label">Retrieve Borrow Logs</label>
+          <form onSubmit={handleSearch} className="search-bar-integrated">
+            <Search size={18} className="search-icon-dim" />
+            <input 
+              value={query} 
+              onChange={e => setQuery(e.target.value)} 
+              placeholder="Enter Name, Email, or Request ID..." 
+            />
+            <button type="submit" className="pill-search-btn" disabled={loading}>
+              {loading ? "Searching..." : "Find"}
+            </button>
+          </form>
+        </div>
+
+        {/* Results Section */}
+        {results && (
+          <div className="results-container">
+            {results.length === 0 ? (
+              <div className="empty-state">
+                <Package size={40} color="#475569" /> 
+                <p>No active logs found for "{query}".</p>
+              </div>
+            ) : (
+              <div className="results-list">
+                {results.map(r => (
+                  <div key={r.id} className={`log-card-glass ${r.status === 'Returned' ? 'is-returned' : ''}`}>
+                    <div className="log-header">
+                      <div className="log-id-group">
+                        <span className="req-id-tag">{r.id}</span>
+                        <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="log-user-info">
+                      <User size={14} />
+                      <strong>{r.name}</strong> 
+                      <span className="user-email">({r.email})</span>
+                    </div>
+
+                    <div className="log-items-wrapper">
+                      <span className="items-label">Borrowed Items:</span>
+                      <div className="log-items-tags">
+                        {r.components.map((c, i) => (
+                          <span key={i} className="item-tag">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="log-footer">
+                      <div className="due-date">
+                        <Calendar size={14} /> 
+                        Due: {new Date(r.return_date).toLocaleDateString()}
+                      </div>
+                      
+                      {r.status !== 'Returned' ? (
+                        <button onClick={() => processReturn(r.id)} className="return-action-btn">
+                          <CheckCircle size={16}/> Mark Returned
+                        </button>
+                      ) : (
+                        <span className="returned-badge"><CheckCircle size={16}/> Cleared</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <button className="reset-search-btn" onClick={() => {setResults(null); setQuery("");}}>
+              <ArrowLeft size={16}/> Back to Search
             </button>
           </div>
+        )}
 
-          {results.length === 0 ? (
-            <div className="return-empty">
-              <div className="return-empty__icon">🔍</div>
-              <div className="return-empty__title">No matches found</div>
-              <button className="btn btn--outline" onClick={clearSearch}>Try Again</button>
-            </div>
-          ) : (
-            results.map((r) => (
-              <div key={r.id} className="result-card">
-                <div className="result-card__header">
-                  <div>
-                    <div className="result-card__id">ID: {r.id}</div>
-                    <div className="result-card__name">{r.name}</div>
-                    <div className="result-card__meta">{r.email} · {r.company}</div>
-                  </div>
-                  <StatusBadge status={r.status} />
-                </div>
-
-                <div className="result-card__comps">
-                  {(r.components || []).map((c, i) => (
-                    <span key={i} className="result-comp-tag">🔧 {c}</span>
-                  ))}
-                </div>
-
-                <div className="result-card__dates">
-                  <span>📅 Taken: <strong>{fmtDate(r.taken_date)}</strong></span>
-                  <span className={isOverdue(r) ? 'result-card__dates--overdue' : ''}>
-                    ⏰ Return: <strong>{fmtDate(r.return_date)}</strong>
-                    {isOverdue(r) && ' ⚠️ Overdue'}
-                  </span>
-                </div>
-
-                <div className="result-card__actions">
-                  {r.status !== 'Returned' && (
-                    <button
-                      className="btn btn--success"
-                      onClick={() => handleReturn(r.id)}
-                      disabled={returning[r.id]}
-                    >
-                      {returning[r.id]
-                        ? <><Spinner size={14} color="#10b981" />&nbsp;Updating…</>
-                        : '✅ Mark as Returned'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 };

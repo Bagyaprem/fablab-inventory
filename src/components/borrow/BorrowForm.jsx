@@ -1,241 +1,127 @@
-import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Send, User, Building, Mail, Package, Calendar, Plus, X, CheckCircle, PackageOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { takeComponents } from '../../api/inventoryApi';
-import { Spinner } from '../common/StatusBadge';
 import './BorrowForm.css';
 
-const SUGGESTIONS = [
-  'Laptop', 'Monitor', 'Keyboard', 'Mouse', 'Headset', 'Webcam',
-  'USB Hub', 'HDMI Cable', 'Power Adapter', 'Docking Station',
-  'Tablet', 'Oscilloscope', 'Multimeter', 'Arduino', 'Raspberry Pi',
-  'Hard Drive', 'SSD', 'RAM Module', 'Projector', 'Extension Cord',
-  'Soldering Iron', 'Ethernet Cable', 'Router', 'GPU', 'CPU',
-];
-
-const today = () => new Date().toISOString().split('T')[0];
-
-const EMPTY_FORM = { name: '', email: '', company: '', return_date: today() };
-
 const BorrowForm = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [form, setForm]           = useState(EMPTY_FORM);
-  const [components, setComponents] = useState(['']);
-  const [errors, setErrors]       = useState({});
-  const [loading, setLoading]     = useState(false);
-  const [success, setSuccess]     = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [genId, setGenId] = useState("");
+  const [currItem, setCurrItem] = useState("");
+  const [form, setForm] = useState({ name: '', email: '', company: '', components: [], return_date: '' });
 
-  /* ── Field handlers ─────────────────────────────────────────────── */
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
-    if (errors[name]) setErrors((p) => ({ ...p, [name]: '' }));
+  useEffect(() => {
+    if (location.state?.selectedItem) {
+      setForm(p => ({ ...p, components: [...new Set([...p.components, location.state.selectedItem])] }));
+    }
+  }, [location.state]);
+
+  const addComp = () => {
+    if (!currItem.trim() || form.components.includes(currItem.trim())) return;
+    setForm({ ...form, components: [...form.components, currItem.trim()] });
+    setCurrItem("");
   };
 
-  const updateComp = useCallback((idx, val) => {
-    setComponents((p) => p.map((c, i) => (i === idx ? val : c)));
-    if (errors.components) setErrors((p) => ({ ...p, components: '' }));
-  }, [errors.components]);
-
-  const addComp    = () => setComponents((p) => [...p, '']);
-  const removeComp = (idx) => {
-    if (components.length === 1) return;
-    setComponents((p) => p.filter((_, i) => i !== idx));
-  };
-
-  /* ── Validation ─────────────────────────────────────────────────── */
-  const validate = () => {
-    const e = {};
-    if (!form.name.trim() || form.name.trim().length < 2)
-      e.name = 'Name must be at least 2 characters.';
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = 'Enter a valid email address.';
-    if (!form.company.trim() || form.company.trim().length < 2)
-      e.company = 'Company name is required.';
-    if (!form.return_date)
-      e.return_date = 'Return date is required.';
-    else if (form.return_date < today())
-      e.return_date = 'Return date must not be in the past.';
-    if (!components.some((c) => c.trim()))
-      e.components = 'Add at least one component.';
-    return e;
-  };
-
-  /* ── Submit ─────────────────────────────────────────────────────── */
-  const handleSubmit = async (e) => {
+  const handleSumbit = async (e) => {
     e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (form.components.length === 0) return toast.error("Add at least one component");
 
-    setLoading(true);
+    const tId = toast.loading("Syncing with FabLab...");
     try {
-      const cleanComps = components.map((c) => c.trim()).filter(Boolean);
-      const res = await takeComponents({
-        name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
-        company: form.company.trim(),
-        return_date: form.return_date,
-        components: cleanComps,
-      });
-      setSuccess(res.data.data);
-      toast.success('Request submitted! Support team notified.');
+      const res = await takeComponents(form);
+      setGenId(res.data.id);
+      setSubmitted(true);
+      toast.success("Request logged as 'Waitlist'", { id: tId });
     } catch (err) {
-      toast.error(err.message || 'Submission failed. Please try again.');
-    } finally {
-      setLoading(false);
+      toast.error("Sync failed", { id: tId });
     }
   };
 
-  const handleReset = () => {
-    setForm(EMPTY_FORM);
-    setComponents(['']);
-    setErrors({});
-    setSuccess(null);
-  };
-
-  /* ── Success screen ─────────────────────────────────────────────── */
-  if (success) {
-    return (
-      <div className="borrow-card">
-        <div className="success-screen">
-          <div className="success-screen__icon">🎉</div>
-          <div className="success-screen__title">Request Submitted!</div>
-          <div className="success-screen__msg">
-            Your inventory request has been recorded and the product support team has been notified via email.
-          </div>
-          <div className="success-screen__id">Request ID: {success.id}</div>
-          <div className="success-screen__actions">
-            <button className="btn btn--primary" onClick={handleReset}>New Request</button>
-            <button className="btn btn--outline" onClick={() => navigate('/return')}>Return Items</button>
-          </div>
+  if (submitted) return (
+    <div className="form-container">
+      <div className="form-card success-card">
+        <div className="success-icon-wrapper">
+          <CheckCircle size={70} color="#10b981" />
         </div>
+        <h2>Request Finalized!</h2>
+        <div className="success-id-box">
+          <span className="id-label">Request ID</span>
+          <span className="id-value">{genId}</span>
+        </div>
+        <p className="success-subtext">
+          Status: <strong>Waitlist</strong><br/>
+          Eve has sent a confirmation to your email.
+        </p>
+        <button onClick={() => navigate('/')} className="confirm-btn">Return Home</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  /* ── Form ────────────────────────────────────────────────────────── */
   return (
-    <form className="borrow-card" onSubmit={handleSubmit} noValidate>
-
-      {/* Personal Info */}
-      <div className="form-section">Personal Information</div>
-
-      <div className="form-row">
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="b-name">
-            Full Name <span className="req">*</span>
-          </label>
-          <input
-            id="b-name" name="name" type="text"
-            className={`form-input ${errors.name ? 'form-input--error' : ''}`}
-            placeholder="John Doe"
-            value={form.name}
-            onChange={handleChange}
-            autoComplete="name"
-          />
-          <span className="form-error">{errors.name}</span>
-        </div>
-
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="b-email">
-            Email Address <span className="req">*</span>
-          </label>
-          <input
-            id="b-email" name="email" type="email"
-            className={`form-input ${errors.email ? 'form-input--error' : ''}`}
-            placeholder="john@company.com"
-            value={form.email}
-            onChange={handleChange}
-            autoComplete="email"
-          />
-          <span className="form-error">{errors.email}</span>
-        </div>
+    <div className="form-container">
+      <div className="borrow-header-area">
       </div>
 
-      <div className="form-row">
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="b-company">
-            Company Name <span className="req">*</span>
-          </label>
-          <input
-            id="b-company" name="company" type="text"
-            className={`form-input ${errors.company ? 'form-input--error' : ''}`}
-            placeholder="Acme Corp"
-            value={form.company}
-            onChange={handleChange}
-            autoComplete="organization"
-          />
-          <span className="form-error">{errors.company}</span>
-        </div>
-
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="b-return-date">
-            Return Date <span className="req">*</span>
-          </label>
-          <input
-            id="b-return-date" name="return_date" type="date"
-            className={`form-input ${errors.return_date ? 'form-input--error' : ''}`}
-            min={today()}
-            value={form.return_date}
-            onChange={handleChange}
-          />
-          <span className="form-error">{errors.return_date}</span>
-        </div>
-      </div>
-
-      <div className="form-divider" />
-
-      {/* Components */}
-      <div className="form-section">Components</div>
-
-      <div className="comp-builder" style={{ marginBottom: '6px' }}>
-        <div className="comp-builder__header">
-          <span className="comp-builder__label">Component List</span>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={addComp}>
-            ＋ Add Item
-          </button>
-        </div>
-
-        {components.map((comp, idx) => (
-          <div key={idx} className="comp-row">
-            <input
-              type="text"
-              className="comp-row__input"
-              placeholder="e.g. Laptop, Oscilloscope, Arduino…"
-              value={comp}
-              onChange={(e) => updateComp(idx, e.target.value)}
-              list="borrow-suggestions"
-            />
-            <button
-              type="button"
-              className="comp-row__remove"
-              onClick={() => removeComp(idx)}
-              title="Remove"
-            >
-              ✕
-            </button>
+      <div className="form-card">
+        <div className="card-accent"></div>
+        <form onSubmit={handleSumbit} className="fancy-form">
+          <div className="input-row">
+            <div className="input-group">
+              <label><User size={14}/> Name</label>
+              <input type="text" required onChange={e => setForm({...form, name: e.target.value})} />
+            </div>
+            <div className="input-group">
+              <label><Building size={14}/> Company</label>
+              <input type="text" required onChange={e => setForm({...form, company: e.target.value})} />
+            </div>
           </div>
-        ))}
 
-        {/* HTML5 datalist autocomplete */}
-        <datalist id="borrow-suggestions">
-          {SUGGESTIONS.map((s) => <option key={s} value={s} />)}
-        </datalist>
+          <div className="input-group">
+            <label><Mail size={14}/> Email</label>
+            <input type="email"  required onChange={e => setForm({...form, email: e.target.value})} />
+          </div>
+
+          <div className="input-group">
+            <label><Package size={14}/> Components</label>
+            <div className="add-item-control">
+              <input 
+                value={currItem} 
+                onChange={e => setCurrItem(e.target.value)} 
+                placeholder="Type component and press Add..." 
+                onKeyDown={e => e.key === 'Enter' ? (e.preventDefault(), addComp()) : null}
+              />
+              <button type="button" onClick={addComp} className="glow-add-btn">
+                <Plus size={20} />
+              </button>
+            </div>
+            
+            <div className="tags-wrapper">
+              {form.components.length === 0 && <span className="empty-tags">No items added yet.</span>}
+              {form.components.map((c, i) => (
+                <span key={i} className="comp-tag">
+                  {c} 
+                  <button type="button" className="tag-remove" onClick={() => setForm({...form, components: form.components.filter(x => x !== c)})}>
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label><Calendar size={14}/> Return Date</label>
+            <input type="date" required onChange={e => setForm({...form, return_date: e.target.value})} />
+          </div>
+
+          <button type="submit" className="confirm-btn">
+            Confirm Request <Send size={16}/>
+          </button>
+        </form>
       </div>
-
-      <span className="form-error">{errors.components}</span>
-      <span className="form-hint">💡 Start typing to see suggestions</span>
-
-      {/* Actions */}
-      <div className="form-actions">
-        <button type="button" className="btn btn--outline" onClick={handleReset}>
-          Clear
-        </button>
-        <button type="submit" className="btn btn--primary" disabled={loading}>
-          {loading ? <><Spinner />&nbsp;Submitting…</> : '📤 Submit Request'}
-        </button>
-      </div>
-    </form>
+    </div>
   );
 };
 

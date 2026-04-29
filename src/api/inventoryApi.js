@@ -1,86 +1,69 @@
 // src/api/inventoryApi.js
-const GAS_URL = "https://script.google.com/macros/s/AKfycbweodnN2W5nIa2h8iAM6EhAgTUF4oljGfl3brYRo6ctQUKqGxfqe71hXzSdifkD2xzEhA/exec";
+// ─── Central API layer for FabLab Inventory ────────────────────────
 
+export const BASE_URL =
+  'https://script.google.com/macros/s/AKfycbyyLfvcQZ4Ml-lexk4HXPFbRDqAQzcbDAKrhQGl4P29a4TwQ_PmH54xYQLP63AMcvlt7g/exec';
 
-/**
- * Sends a "Take" request to Google Sheets
- */
-export const takeComponents = async (formData) => {
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            redirect: 'follow', 
-            body: JSON.stringify({ action: 'take', ...formData }),
-        });
-        return await response.json();
-    } catch (error) {
-        throw new Error("Failed to connect to the inventory database.");
-    }
-};
+// ── Generic POST helper ──────────────────────────────────────────────
+async function post(payload) {
+  const res = await fetch(BASE_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
 
-/**
- * Fetches all inventory records for the Dashboard
- */
-export const getRequests = async () => {
-    try {
-        // Added ?t= parameter to prevent browser caching of old sheet data
-        const response = await fetch(`${GAS_URL}?t=${Date.now()}`); 
-        const data = await response.json();
-        return { data: { data: data.data, counts: data.counts } };
-    } catch (error) {
-        throw new Error("Could not load inventory records.");
-    }
-};
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
-/**
- * Updates a specific item to "Returned"
- */
-export const returnComponents = async (requestId) => {
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            redirect: 'follow',
-            body: JSON.stringify({ action: 'return', id: requestId }),
-        });
-        return await response.json();
-    } catch (error) {
-        throw new Error("Failed to update return status.");
-    }
-};
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.msg || 'Server error');
 
-/**
- * Helper to find a specific record by ID
- */
-export const getRequestById = async (id) => {
-    const all = await getRequests();
-    const record = all.data.data.find(r => r.id === id);
-    return { data: { data: record } };
-};
+  return { data: json };
+}
 
-/**
- * Looks up requests by Name, Email, or ID
- * Prioritizes Name and handles case-insensitive search
- */
-export const lookupRequests = async (searchQuery) => {
-  try {
-    const response = await fetch(`${GAS_URL}?t=${Date.now()}`);
-    const result = await response.json();
-    
-    if (!searchQuery) return { data: { data: result.data } };
+// ── 1. Inventory (GET) ───────────────────────────────────────────────
+// Fetches the live component list for the library grid
+export async function getInventory() {
+  const res = await fetch(BASE_URL, { method: 'GET', redirect: 'follow' });
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+  const json = await res.json();
+  return { data: Array.isArray(json) ? json : [] };
+}
 
-    const query = searchQuery.toLowerCase().trim();
+// ── 2. Take / Borrow components ────────────────────────────────────────
+// Logic: Submits as "Taken" if in stock, "Waitlist" otherwise
+export async function takeComponents(formData) {
+  return post({ action: 'request', ...formData });
+}
 
-    const filteredData = result.data.filter(r => 
-        // Priority 1: Search by Name
-        r.name.toLowerCase().includes(query) || 
-        // Priority 2: Search by Email or ID
-        r.email.toLowerCase().includes(query) ||
-        r.id.toLowerCase().includes(query)
-    );
+// ── 3. Return components ───────────────────────────────────────────────
+// Logic: Marks status as "Returned" and restores stock quantity
+export async function returnComponents(id) {
+  return post({ action: 'updateStatus', id, newStatus: 'Returned' });
+}
 
-    return { data: { data: filteredData } };
-  } catch (error) {
-    console.error("Lookup error:", error);
-    throw new Error("Could not find any records for that search.");
-  }
-};
+// ── 4. Lookup requests (Enhanced Search) ─────────────────────────────
+// Supports searching by Name, Email, or Request ID
+export async function lookupRequests(query) {
+  return post({ action: 'lookup', query });
+}
+
+// ── 5. EVE Bot: Quick Stock Check ────────────────────────────────────
+// Specifically for the AI chat widget to answer availability questions
+export async function checkStock(itemName) {
+  return post({ action: 'checkStock', item: itemName });
+}
+
+// ── 6. Contact Us / Support ──────────────────────────────────────────
+// Sends a direct email notification to the owner (prembagya822@gmail.com)
+export async function sendContactMessage(contactData) {
+  return post({ action: 'contact', ...contactData });
+}
+
+// ── 7. Admin Dashboard Data ──────────────────────────────────────────
+export async function getRequests() {
+  return post({ action: 'getAll' });
+}
+
+export async function getRequestById(id) {
+  return post({ action: 'getById', id });
+}

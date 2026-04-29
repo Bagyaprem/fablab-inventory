@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import './EmailPreview.css';
 
-/* ── Sample data to populate the previews ─────────────────────────── */
-const SAMPLE = {
-  id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-  name: 'Priya Sharma',
-  email: 'priya.sharma@company.com',
-  company: 'TechNova Solutions',
-  components: ['Laptop (Dell XPS 15)', 'Oscilloscope', 'Arduino Mega', 'USB Hub'],
-  taken_date: '2026-04-18',
-  return_date: '2026-04-25',
-  days_overdue: 2,
-};
+
+
 
 const fmtDate = (d) =>
   new Date(d + 'T00:00:00').toLocaleDateString('en-US', {

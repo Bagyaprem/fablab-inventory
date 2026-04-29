@@ -1,67 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, Cpu, Mail, Menu, X } from 'lucide-react';
 import './Header.css';
 
 const NAV_LINKS = [
-  { path: '/',       label: 'Home',         },
-  { path: '/borrow', label: 'Take Components',  },
-  { path: '/return', label: 'Return Components',  },
+  { path: '/',          label: 'Home',               icon: <Home size={20} /> },
+  { path: '/components',label: 'Components Library', icon: <Cpu size={20} /> },
+  { path: '/contact',     label: 'Contact us',    icon: <Mail size={20} /> },
 ];
 
 const Header = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const handleNav = (path) => {
-    navigate(path);
-    setMenuOpen(false);
-  };
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handler);
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="container navbar__inner">
         {/* Brand */}
-       
-        <div className="navbar__brand" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <img 
-              src="/logo.png" 
-              alt="FabLab Logo" 
-              style={{ height: '32px', width: 'auto', marginRight: '10px' }} 
-            />
-           <span className="navbar__logo-text">FabLab Inventory</span> {/* Changed name */}
+        <div className="navbar__brand" onClick={() => navigate('/')}>
+          <img src="/logo.png" alt="Logo" style={{ height: '32px' }} />
+          <span className="navbar__logo-text">FabLab Inventory</span>
         </div>
-        {/* Desktop links */}
-        {NAV_LINKS.map((link) => (
-          <button
-            key={link.path}
-            className={`navbar__link ${pathname === link.path ? 'navbar__link--active' : ''}`}
-            onClick={() => handleNav(link.path)}
-          >
-            {link.label}
-          </button>
-        ))}
 
-        {/* Hamburger */}
-        <button
-          className="navbar__hamburger"
-          onClick={() => setMenuOpen((p) => !p)}
-          aria-label="Toggle navigation"
-        >
-          <span /><span /><span />
+        {/* Desktop links */}
+        <div className="navbar__desktop-links">
+          {NAV_LINKS.map((link) => (
+            <button
+              key={link.path}
+              className={`nav-item ${pathname === link.path ? 'active' : ''}`}
+              onClick={() => navigate(link.path)}
+            >
+              <div className="icon-box">{link.icon}</div>
+              <span className="nav-label">{link.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile hamburger */}
+        <button className="navbar__hamburger" onClick={() => setMobileOpen(o => !o)}>
+          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
-      {menuOpen && (
+      {/* Mobile drawer */}
+      {mobileOpen && (
         <div className="navbar__mobile-menu">
           {NAV_LINKS.map((link) => (
             <button
               key={link.path}
-              className={`navbar__link ${pathname === link.path ? 'navbar__link--active' : ''}`}
-              onClick={() => handleNav(link.path)}
+              className={`mobile-nav-item ${pathname === link.path ? 'active' : ''}`}
+              onClick={() => navigate(link.path)}
             >
-              {link.icon} {link.label}
+              {link.icon}
+              <span>{link.label}</span>
             </button>
           ))}
         </div>

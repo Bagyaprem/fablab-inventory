@@ -1,15 +1,16 @@
 import React from 'react';
 import './Common.css';
 
-/* ─── StatusBadge ────────────────────────────────────────────────── */
+/* ── StatusBadge ─────────────────────────────────────────────────── */
 const STATUS_CONFIG = {
   Taken:    { icon: '📤', label: 'Taken' },
   Returned: { icon: '✅', label: 'Returned' },
   Overdue:  { icon: '⚠️', label: 'Overdue' },
+  Waitlist: { icon: '🕐', label: 'Waitlist' },
 };
 
 const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || { icon: '❓', label: status };
+  const cfg = STATUS_CONFIG[status] || { icon: '❓', label: status || 'Unknown' };
   return (
     <span className={`badge badge--${status}`}>
       {cfg.icon} {cfg.label}
@@ -17,20 +18,20 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-/* ─── Spinner ────────────────────────────────────────────────────── */
+/* ── Spinner ─────────────────────────────────────────────────────── */
 export const Spinner = ({ size = 16, color = '#fff' }) => (
   <div
     className="spinner"
     style={{
       width: size,
       height: size,
-      borderWidth: Math.max(2, size / 8),
+      borderWidth: Math.max(2, Math.round(size / 8)),
       borderTopColor: color,
     }}
   />
 );
 
-/* ─── AlertBox ───────────────────────────────────────────────────── */
+/* ── AlertBox ────────────────────────────────────────────────────── */
 export const AlertBox = ({ type = 'info', icon, title, message, onDismiss }) => (
   <div className={`alert alert--${type}`}>
     {icon && <span className="alert__icon">{icon}</span>}

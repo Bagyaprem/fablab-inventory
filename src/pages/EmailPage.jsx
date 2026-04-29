@@ -9,7 +9,7 @@ const EmailPage = () => (
         Email <span className="gradient-text">Templates</span>
       </h1>
       <p className="page-header__sub">
-        Preview all automated email notifications sent by InvenTrack —
+        Preview all automated email notifications sent by FabLab Inventory —
         new requests, return reminders, and overdue escalations.
       </p>
     </div>
